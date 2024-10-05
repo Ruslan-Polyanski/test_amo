@@ -6,21 +6,27 @@ function getFirstDataFromServerWithDelay(delay) {
   const storeLeads = [];
 
   const getData =  async function saveLeadsAndShow(page = 1) {
-    const response = await api.getAllLeads(page, 3).then((data) => data);
-  
-    response._embedded.leads.forEach(item => {
-      storeLeads.push({name: item.name, price: item.price, id: item.id, stateCard: false})
-    });
-  
-    if(!response._links.next) {
-      showLeadsInTable(tbodyElement, storeLeads)
+
+    try{
+      const response = await api.getAllLeads(page, 3).then((data) => data)
+
+      response._embedded.leads.forEach(item => {
+        storeLeads.push({name: item.name, price: item.price, id: item.id, stateCard: false})
+      });
+    
+      if(!response._links.next) {
+        showLeadsInTable(tbodyElement, storeLeads)
+      }
+    
+      if(response._links.next) {
+        setTimeout(() => {
+          saveLeadsAndShow(++page, delay)
+        }, delay)
+      }
+    } catch(error) {
+      console.log(error)
     }
-  
-    if(response._links.next) {
-      setTimeout(() => {
-        saveLeadsAndShow(++page, delay)
-      }, delay)
-    }
+    
   }
 
   return [storeLeads, getData];

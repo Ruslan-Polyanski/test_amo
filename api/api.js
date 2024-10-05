@@ -3,37 +3,45 @@ const URL = 'https://ruslapolyanski.amocrm.ru/api/v4/';
 
 const api = {
   async getAllLeads(page = 1, limit = 250) {
-    let response = await fetch(`${URL}leads?limit=${limit}&page=${page}`, {
-      method: "GET",
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        accept:"application/json"
-     }
-    });
-  
-    if (response.ok) { 
-      let json = await response.json();
-      return json;
-    } else {
-      alert("Ошибка HTTP: " + response.status);
+
+    try {
+      let response = await fetch(`${URL}leads?limit=${limit}&page=${page}`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          accept:"application/json"
+       }
+      });
+    
+      if (response.ok) { 
+        let json = await response.json();
+        return json;
+      } 
+    } catch(error) {
+      console.log(error)
     }
+
   },
   
   async getCardLead(id) {
-    let response = await fetch(`${URL}leads/${id}`, {
-      method: "GET",
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        accept:"application/json"
-     }
-    });
 
-    if (response.ok) { 
-      let json = await response.json();
-      return json;
-    } else {
-      alert("Ошибка HTTP: " + response.status);
+    try {
+      let response = await fetch(`${URL}leads/${id}`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          accept:"application/json"
+       }
+      });
+  
+      if (response.ok) { 
+        let json = await response.json();
+        return json;
+      } 
+    } catch (error) {
+      console.log(error)
     }
+
   }
 }
 
