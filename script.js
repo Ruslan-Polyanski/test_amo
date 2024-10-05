@@ -1,96 +1,86 @@
-const mainBox = document.querySelector('.main')
-const access_token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjIzZjE4ZWEyMjVkMDAyN2FhYTRkNjY0NTUwNWI4NDRjYjg5NzdlMTMyNzE4MTY5NWRkMjZlNDIyNzg0YmM1ZDQxZGRlZjgxNTFiNGRiOTQxIn0.eyJhdWQiOiI1NDVlYjYxNi1jMmMyLTQzYTEtYTdhNi0wODU0YmNlYzNmOGEiLCJqdGkiOiIyM2YxOGVhMjI1ZDAwMjdhYWE0ZDY2NDU1MDViODQ0Y2I4OTc3ZTEzMjcxODE2OTVkZDI2ZTQyMjc4NGJjNWQ0MWRkZWY4MTUxYjRkYjk0MSIsImlhdCI6MTcyNzYwNTkxNCwibmJmIjoxNzI3NjA1OTE0LCJleHAiOjE3MzU2MDMyMDAsInN1YiI6IjExNTgxMTI2IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjMxOTc4ODc4LCJiYXNlX2RvbWFpbiI6ImFtb2NybS5ydSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiNWQ3YjBmOTItYjQ0Ny00MGM0LTliMmQtZjA2ZWY4ZjE1OTM1IiwiYXBpX2RvbWFpbiI6ImFwaS1iLmFtb2NybS5ydSJ9.oRSFQw5Wpwnng1JmuJJ1N6WM6uSTiq2qaLq2YHsuqtZgoGfBccc4nBRJ2eaQd92rha6MI2eqRoBl-tPSZAzFYhcV7doIcIwRXuICBPdfhasOwc90hZvi3bSey_td3oftMYrsOIN6h9NBFIJJxMQ3fO3JHWxU-42RV7LzUMG8vy-TOZzuMbCIDrDZbukZpEx6GXd2i635j8L4dlGtwpEa0gHRnTOpSDtOQysSfd8owIt12ZNCzPs-E7pN5eTR4u3WIosaiVPBddFu_40DVI-GlQAavkSFPBoP1WFxQYjR7a5uGT3KLuE19vALl_t4jAhKiR7lTn3sZ6vnSPv-rfxutA'
-const amoDate = document.querySelector('.amoDate')
-const cardData = document.querySelector('.cardData')
+import { api } from "./api/api.js";
+import { spinUI, tbodyElement, createSvgCircleUI } from "./ui/ui.js";
+import { getConvertDateAndTimestamp } from "./utils/getConvertDateAndTimestamp.js";
+import { getBackgroundStatusCardTask } from "./utils/getBackgroundStatusCardTask.js";
+import { createTrsAndShow } from "./utils/createTrsAndShow.js";
 
-const getData = async function(page, limit) {
-  let response = await fetch(`https://ruslapolyanski.amocrm.ru/api/v4/leads?limit=${limit}&page=${page}`, {
-    method: "GET",
-    headers: {
-      'Authorization': `Bearer ${access_token}`,
-      accept:"application/json"
-   }
-  });
+const storeLeads = [];
 
-  if (response.ok) { 
-    let json = await response.json();
-    return json
-  } else {
-    alert("Ошибка HTTP: " + response.status);
-  }
-}
-
-const arrData = [];
-
-async function saveData(page) {
-  const response = await getData(page, 3).then((data) => data);
-
-  console.log(response)
+async function saveLeads(page = 1) {
+  const response = await api.getAllLeads(page, 3).then((data) => data);
 
   response._embedded.leads.forEach(item => {
-    arrData.push({name: item.name, price: item.price, id: item.id})
+    storeLeads.push({name: item.name, price: item.price, id: item.id, stateCard: false})
   });
 
   if(response._links.next) {
     setTimeout(() => {
-      saveData(++page)
+      saveLeads(++page)
     }, 1000)
   }
 
 }
 
-saveData(1)
+saveLeads()
 
 setTimeout(() => {
-  console.log(arrData)
-  setUIData()
-}, 10000)
+  createTrsAndShow(storeLeads, tbodyElement)
+}, 5000)
 
-function setUIData() {
-  const arr = arrData.map(item => {
-    const ui = `
-      <div id=${item.id} class='card'>
-        <div>${item.name}</div>
-        <div>${item.price}</div>
-        <div>${item.id}</div>
-      </div>
-    `;
-    amoDate.insertAdjacentHTML('beforeend', ui);
-  })
+function createTdsAndShow() {
+
 }
 
-mainBox.addEventListener('click', async (event) => {
-  const data = await getDataCard(event.target.parentElement.id).then(data => data);
-  const date = new Date(data.closest_task_at);
-  console.log(data.closest_task_at)
-  const newFormatDate = `${date.getDay()}.${date.getMonth()}.${date.getFullYear()}`;
-  const ui = `
-    <div>
-      <div>${data.name}</div>
-      <div>${data.id}</div>
-      <div>${newFormatDate}</div>
-      <div>${data.closed_at}</div>
-    </div>
-  `
-  cardData.insertAdjacentHTML('beforeend', ui);
-  // название, id, дату в формате DD.MM.YYYY, статус ближайщей задачи.
-  console.log(data)
-})
 
-const getDataCard = async function(id) {
-  let response = await fetch(`https://ruslapolyanski.amocrm.ru/api/v4/leads/${id}`, {
-    method: "GET",
-    headers: {
-      'Authorization': `Bearer ${access_token}`,
-      accept:"application/json"
-   }
-  });
+tbodyElement.addEventListener('click', async (event) => {
+  const id = +event.target.parentElement.id;
 
-  if (response.ok) { 
-    let json = await response.json();
-    return json
-  } else {
-    alert("Ошибка HTTP: " + response.status);
+  for(let i = 0; i < storeLeads.length; i++) {
+
+    if(storeLeads[i].id === id) {
+      if(storeLeads[i].stateCard === true) {
+        return;
+      }
+      if(storeLeads[i].stateCard === false) {
+        storeLeads.forEach(item => {
+          if(item.stateCard === true && item.id !== id) {
+            item.stateCard = false;
+
+            const trElement = document.getElementById(item.id); //создаем для этой функции
+
+            const ui = `
+                          <td data-label="Название">${item.name}</td>
+                          <td data-label="Бюджет">${item.price}</td>
+                          <td data-label="ID">${item.id}</td>
+                        `;
+            trElement.innerHTML = ui;
+          }
+
+        })
+        storeLeads[i].stateCard = true;
+        const tr = event.target.parentElement;
+        tr.innerHTML = spinUI;
+
+        const data = await api.getCardLead(id).then(data => data);
+
+        const {date, timestampTask} = getConvertDateAndTimestamp(data.closest_task_at);
+        
+        const ui = `
+          <div>${data.name}</div>
+          <div>${data.id}</div>
+          <div>${date}</div>
+        `;
+      
+        tr.innerHTML = ui;
+
+        const colorSVG = getBackgroundStatusCardTask(timestampTask)
+        const circleSVG = createSvgCircleUI(colorSVG);
+
+        tr.appendChild(circleSVG)
+      }
+    }
+
   }
-}
+
+})
 
